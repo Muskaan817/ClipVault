@@ -1,5 +1,15 @@
 const db = require('../db');
 
+// Check whether an ID is a valid positive integer
+const isValidId = (id) => {
+  return /^[1-9]\d*$/.test(id);
+};
+
+// Check whether a value is actually a boolean
+const isBoolean = (value) => {
+  return typeof value === 'boolean';
+};
+
 // Detect content type if not explicitly provided
 const detectType = (content) => {
   if (!content) return 'text';
@@ -26,6 +36,29 @@ const getAllClips = async (req, res) => {
   try {
     const { q, pinned, limit = 50, offset = 0 } = req.query;
 
+    const parsedLimit = Number(limit);
+const parsedOffset = Number(offset);
+
+if (
+  !Number.isInteger(parsedLimit) ||
+  parsedLimit < 1 ||
+  parsedLimit > 100 ||
+  !Number.isInteger(parsedOffset) ||
+  parsedOffset < 0
+) {
+  return res.status(400).json({
+    success: false,
+    message: 'limit must be 1–100 and offset must be a non-negative integer',
+  });
+}
+
+if (pinned !== undefined && !['true', 'false'].includes(pinned)) {
+  return res.status(400).json({
+    success: false,
+    message: 'pinned must be true or false',
+  });
+}
+
     let query = 'SELECT * FROM clips';
     const conditions = [];
     const params = [];
@@ -46,10 +79,10 @@ const getAllClips = async (req, res) => {
 
     query += ' ORDER BY is_pinned DESC, created_at DESC';
 
-    params.push(parseInt(limit, 10));
+    params.push(parsedLimit);
     query += ` LIMIT $${params.length}`;
 
-    params.push(parseInt(offset, 10));
+    params.push(parsedOffset);
     query += ` OFFSET $${params.length}`;
 
     const { rows } = await db.query(query, params);
@@ -64,6 +97,12 @@ const getAllClips = async (req, res) => {
 const getClipById = async (req, res) => {
   try {
     const { id } = req.params;
+    if (!isValidId(id)) {
+  return res.status(400).json({
+    success: false,
+    message: 'Invalid clip ID',
+  });
+}
     const { rows } = await db.query('SELECT * FROM clips WHERE id = $1', [id]);
 
     if (rows.length === 0) {
@@ -85,6 +124,12 @@ const createClip = async (req, res) => {
     if (!content || !content.trim()) {
       return res.status(400).json({ success: false, message: 'Clip content is required' });
     }
+    if (!isBoolean(is_pinned)) {
+  return res.status(400).json({
+    success: false,
+    message: 'is_pinned must be a boolean'
+  });
+}
 
     const clipType = type || detectType(content);
 
@@ -94,7 +139,7 @@ const createClip = async (req, res) => {
       RETURNING *;
     `;
 
-    const { rows } = await db.query(query, [content.trim(), clipType, Boolean(is_pinned)]);
+    const { rows } = await db.query(query, [content.trim(), clipType, is_pinned]);
     res.status(201).json({ success: true, data: rows[0] });
   } catch (error) {
     console.error('Error creating clip:', error);
@@ -106,15 +151,28 @@ const createClip = async (req, res) => {
 const updateClip = async (req, res) => {
   try {
     const { id } = req.params;
+    if (!isValidId(id)) {
+  return res.status(400).json({
+    success: false,
+    message: 'Invalid clip ID',
+  });
+}
     const { content, type, is_pinned } = req.body;
 
     const updates = [];
     const params = [id];
 
     if (content !== undefined) {
-      params.push(content);
-      updates.push(`content = $${params.length}`);
-    }
+  if (typeof content !== 'string' || !content.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: 'Clip content must be a non-empty string',
+    });
+  }
+
+  params.push(content.trim());
+  updates.push(`content = $${params.length}`);
+}
 
     if (type !== undefined) {
       params.push(type);
@@ -122,9 +180,16 @@ const updateClip = async (req, res) => {
     }
 
     if (is_pinned !== undefined) {
-      params.push(Boolean(is_pinned));
-      updates.push(`is_pinned = $${params.length}`);
-    }
+  if (!isBoolean(is_pinned)) {
+    return res.status(400).json({
+      success: false,
+      message: 'is_pinned must be a boolean',
+    });
+  }
+
+  params.push(is_pinned);
+  updates.push(`is_pinned = $${params.length}`);
+}
 
     if (updates.length === 0) {
       return res.status(400).json({ success: false, message: 'No fields to update provided' });
@@ -156,6 +221,12 @@ const updateClip = async (req, res) => {
 const deleteClip = async (req, res) => {
   try {
     const { id } = req.params;
+    if (!isValidId(id)) {
+  return res.status(400).json({
+    success: false,
+    message: 'Invalid clip ID',
+  });
+}
     const { rowCount } = await db.query('DELETE FROM clips WHERE id = $1', [id]);
 
     if (rowCount === 0) {
