@@ -72,3 +72,58 @@ body {
 .empty-state p {
   color: #94a3b8;
 }
+
+
+.clips-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.clip-count {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.clip-card {
+  padding: 20px;
+  background: #172338;
+  border: 1px solid #263247;
+  border-radius: 12px;
+}
+
+.clip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.clip-type {
+  padding: 5px 10px;
+  color: #93c5fd;
+  background: #233654;
+  border-radius: 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.clip-card pre {
+  margin: 0;
+  color: #e2e8f0;
+  font-family: monospace;
+  font-size: 14px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.clip-date {
+  margin: 16px 0 0;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.error {
+  color: #fca5a5;
+}
