@@ -134,6 +134,26 @@ function App() {
 
                 <pre>{clip.content}</pre>
 
+<button
+  type="button"
+  
+onClick={async () => {
+  try {
+    await window.clipVault.copyText(clip.content);
+    setMessage('Copied to clipboard!');
+    setError('');
+  } catch (err) {
+    console.error('Copy failed:', err);
+    setError('Could not copy this clip.');
+    setMessage('');
+  }
+}}
+
+>
+  Copy
+</button>
+
+
                 <p className="clip-date">
                   {new Date(clip.created_at).toLocaleString()}
                 </p>
