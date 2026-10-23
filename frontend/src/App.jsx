@@ -1,32 +1,77 @@
 
 import { useEffect, useState } from 'react';
 
+const API_URL = 'http://localhost:5001/api/clips';
+
 function App() {
   const [clips, setClips] = useState([]);
+  const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+
+  async function fetchClips() {
+    try {
+      setError('');
+
+      const response = await fetch(API_URL);
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Failed to fetch clips');
+      }
+
+      setClips(result.data);
+    } catch (err) {
+      console.error(err);
+      setError('Could not load clips. Check that the backend is running.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function fetchClips() {
-      try {
-        const response = await fetch('http://localhost:5001/api/clips');
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
-          throw new Error(result.message || 'Failed to fetch clips');
-        }
-
-        setClips(result.data);
-      } catch (err) {
-        console.error('Error fetching clips:', err);
-        setError('Could not load clips. Make sure the backend is running.');
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchClips();
   }, []);
+
+  async function handleAddClip(event) {
+    event.preventDefault();
+
+    if (!content.trim()) {
+      setError('Please enter some text or code first.');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError('');
+      setMessage('');
+
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: content.trim() }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Failed to save clip');
+      }
+
+      setContent('');
+      setMessage('Clip saved successfully!');
+      await fetchClips();
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Could not save clip.');
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <main className="app">
@@ -46,18 +91,35 @@ function App() {
           Your copied text and code, all in one place.
         </p>
 
-        {loading && <p>Loading clips...</p>}
+        <form className="add-clip-form" onSubmit={handleAddClip}>
+          <label htmlFor="clip-content">Add a new clip</label>
 
+          <textarea
+            id="clip-content"
+            value={content}
+            onChange={(event) => setContent(event.target.value)}
+            placeholder="Paste your text, code, or URL here..."
+            rows={4}
+          />
+
+          <button type="submit" disabled={saving}>
+            {saving ? 'Saving...' : 'Save Clip'}
+          </button>
+        </form>
+
+        {message && <p className="success-message">{message}</p>}
         {error && <p className="error">{error}</p>}
+
+        {loading && <p>Loading clips...</p>}
 
         {!loading && !error && clips.length === 0 && (
           <div className="empty-state">
             <h2>No clips yet</h2>
-            <p>Your clipboard history will appear here.</p>
+            <p>Your saved clips will appear here.</p>
           </div>
         )}
 
-        {!loading && !error && clips.length > 0 && (
+        {!loading && clips.length > 0 && (
           <div className="clips-list">
             <p className="clip-count">
               {clips.length} saved clip(s)
