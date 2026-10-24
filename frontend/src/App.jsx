@@ -1,7 +1,6 @@
 
 import { useEffect, useState } from 'react';
-
-const API_URL = 'http://localhost:5001/api/clips';
+import { getClips, createClip } from './services/clipService';
 
 function App() {
   const [clips, setClips] = useState([]);
@@ -11,67 +10,52 @@ function App() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
 
-  async function fetchClips() {
-    try {
-      setError('');
+async function fetchClips() {
+  try {
+    setError('');
 
-      const response = await fetch(API_URL);
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || 'Failed to fetch clips');
-      }
-
-      setClips(result.data);
-    } catch (err) {
-      console.error(err);
-      setError('Could not load clips. Check that the backend is running.');
-    } finally {
-      setLoading(false);
-    }
+    const data = await getClips();
+    setClips(data);
+  } catch (err) {
+    console.error(err);
+    setError('Could not load clips. Check that the backend is running.');
+  } finally {
+    setLoading(false);
   }
+}
 
   useEffect(() => {
     fetchClips();
   }, []);
 
   async function handleAddClip(event) {
-    event.preventDefault();
+  event.preventDefault();
 
-    if (!content.trim()) {
-      setError('Please enter some text or code first.');
-      return;
-    }
-
-    try {
-      setSaving(true);
-      setError('');
-      setMessage('');
-
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content: content.trim() }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || 'Failed to save clip');
-      }
-
-      setContent('');
-      setMessage('Clip saved successfully!');
-      await fetchClips();
-    } catch (err) {
-      console.error(err);
-      setError(err.message || 'Could not save clip.');
-    } finally {
-      setSaving(false);
-    }
+  if (!content.trim()) {
+    setError('Please enter some text or code first.');
+    setMessage('');
+    return;
   }
+
+  try {
+    setSaving(true);
+    setError('');
+    setMessage('');
+
+    await createClip(content.trim());
+
+    setContent('');
+    setMessage('Clip saved successfully!');
+
+    await fetchClips();
+  } catch (err) {
+    console.error(err);
+    setError(err.message || 'Could not save clip.');
+    setMessage('');
+  } finally {
+    setSaving(false);
+  }
+}
 
   return (
     <main className="app">
@@ -134,25 +118,22 @@ function App() {
 
                 <pre>{clip.content}</pre>
 
-<button
-  type="button"
-  
-onClick={async () => {
-  try {
-    await window.clipVault.copyText(clip.content);
-    setMessage('Copied to clipboard!');
-    setError('');
-  } catch (err) {
-    console.error('Copy failed:', err);
-    setError('Could not copy this clip.');
-    setMessage('');
-  }
-}}
-
->
-  Copy
-</button>
-
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await window.clipVault.copyText(clip.content);
+                      setMessage('Copied to clipboard!');
+                      setError('');
+                    } catch (err) {
+                      console.error('Copy failed:', err);
+                      setError('Could not copy this clip.');
+                      setMessage('');
+                    }
+                  }}
+                >
+                  Copy
+                </button>
 
                 <p className="clip-date">
                   {new Date(clip.created_at).toLocaleString()}
