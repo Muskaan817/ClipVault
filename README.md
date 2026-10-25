@@ -166,10 +166,12 @@ npm start
 
 ```bash
 # From the project root:
-npm run frontend
+npx vite frontend
 ```
 
 *The Vite development server will start on `http://localhost:5173`.*
+
+> **Note on `package.json` script:** In Vite v8, passing `--root` is deprecated. If running `npm run frontend` gives a CLI argument error on your environment, use `npx vite frontend` directly.
 
 #### Terminal 3 — Launch the Desktop App
 
@@ -195,7 +197,7 @@ The backend reads configuration values from the `.env` file located in the root 
 | `DB_USER` | No | `postgres` | PostgreSQL username |
 | `DB_PASSWORD`| Yes | `""` | Password for the PostgreSQL user |
 | `DB_NAME` | No | `clipvault` | PostgreSQL database name |
-| `DATABASE_URL`| Optional | — | Complete connection string (e.g. `postgres://user:pass@host:5432/clipvault`). If provided, takes precedence over individual `DB_*` variables. This variable is **not** included in `.env.example` — add it manually if you need it. |
+| `DATABASE_URL`| Optional | — | Complete connection string (e.g. `postgres://user:pass@host:5432/clipvault`). If provided, takes precedence over individual `DB_*` variables. |
 
 ---
 
