@@ -24,7 +24,6 @@ pool.on('error', (err) => {
   console.error('Unexpected error on idle PostgreSQL client:', err);
 });
 
-// Helper function to initialize schema if needed
 const initDb = async () => {
   const query = `
     CREATE TABLE IF NOT EXISTS clips (

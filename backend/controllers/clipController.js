@@ -1,16 +1,13 @@
 const db = require('../db');
 
-// Check whether an ID is a valid positive integer
 const isValidId = (id) => {
   return /^[1-9]\d*$/.test(id);
 };
 
-// Check whether a value is actually a boolean
 const isBoolean = (value) => {
   return typeof value === 'boolean';
 };
 
-// Detect content type if not explicitly provided
 const detectType = (content) => {
   if (!content) return 'text';
   const trimmed = content.trim();
@@ -31,7 +28,6 @@ const detectType = (content) => {
   return 'text';
 };
 
-// GET /api/clips - Retrieve all clips (with optional search and filter)
 const getAllClips = async (req, res) => {
   try {
     const { q, pinned, limit = 50, offset = 0 } = req.query;
@@ -93,7 +89,6 @@ if (pinned !== undefined && !['true', 'false'].includes(pinned)) {
   }
 };
 
-// GET /api/clips/:id - Retrieve single clip
 const getClipById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -116,7 +111,6 @@ const getClipById = async (req, res) => {
   }
 };
 
-// POST /api/clips - Save new clip
 const createClip = async (req, res) => {
   try {
     const { content, type, is_pinned = false } = req.body;
@@ -147,7 +141,6 @@ const createClip = async (req, res) => {
   }
 };
 
-// PUT /api/clips/:id - Update clip content or pinned status
 const updateClip = async (req, res) => {
   try {
     const { id } = req.params;
@@ -217,7 +210,6 @@ const updateClip = async (req, res) => {
   }
 };
 
-// DELETE /api/clips/:id - Delete clip
 const deleteClip = async (req, res) => {
   try {
     const { id } = req.params;
@@ -240,7 +232,6 @@ const deleteClip = async (req, res) => {
   }
 };
 
-// DELETE /api/clips - Clear clips (optional: only unpinned)
 const clearClips = async (req, res) => {
   try {
     const { includePinned = 'false' } = req.query;
