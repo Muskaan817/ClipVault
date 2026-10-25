@@ -12,13 +12,18 @@ export async function getClips() {
   return result.data;
 }
 
-export async function createClip(content) {
+export async function createClip(content, type) {
+  const payload = { content };
+  if (type) {
+    payload.type = type;
+  }
+
   const response = await fetch(API_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ content }),
+    body: JSON.stringify(payload),
   });
 
   const result = await response.json();

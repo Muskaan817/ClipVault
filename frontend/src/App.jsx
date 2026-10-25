@@ -15,6 +15,7 @@ function getErrorMessage(err, fallbackMessage) {
 function App() {
   const [clips, setClips] = useState([]);
   const [content, setContent] = useState('');
+  const [clipType, setClipType] = useState('text');
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('All Clips');
   const [searchQuery, setSearchQuery] = useState('');
@@ -59,7 +60,7 @@ async function fetchClips() {
     setError('');
     setMessage('');
 
-    await createClip(content.trim());
+    await createClip(content.trim(), clipType);
 
     setContent('');
     setMessage('Clip saved successfully!');
@@ -204,7 +205,21 @@ const emptyState = getEmptyState();
         </p>
 
         <form className="add-clip-form" onSubmit={handleAddClip}>
-          <label htmlFor="clip-content">Add a new clip</label>
+          <div className="form-header">
+            <label htmlFor="clip-content">Add a new clip</label>
+            <div className="type-selector">
+              <label htmlFor="clip-type">Type:</label>
+              <select
+                id="clip-type"
+                value={clipType}
+                onChange={(event) => setClipType(event.target.value)}
+              >
+                <option value="text">Text</option>
+                <option value="code">Code Snippet</option>
+                <option value="url">Link</option>
+              </select>
+            </div>
+          </div>
 
           <textarea
             id="clip-content"
