@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import {getClips,createClip,updateClip,deleteClip} from './services/clipService';
 import PinButton from './components/PinButton';
 import DeleteButton from './components/DeleteButton';
+import Sidebar from './components/Sidebar';
 
 function App() {
   const [clips, setClips] = useState([]);
@@ -103,17 +104,28 @@ async function handleDeleteClip(clip) {
   }
 }
 
+const filteredClips = clips.filter((clip) => {
+  switch (activeFilter) {
+    case 'Pinned':
+      return clip.is_pinned;
+
+    case 'Code Snippets':
+      return clip.type === 'code';
+
+    case 'Links':
+      return clip.type === 'url';
+
+    default:
+      return true;
+  }
+});
+
   return (
     <main className="app">
-      <aside className="sidebar">
-        <h2>ClipVault</h2>
-        <p>Smart Clipboard Manager</p>
-
-        <button className="active">All Clips</button>
-        <button>Pinned</button>
-        <button>Code Snippets</button>
-        <button>Links</button>
-      </aside>
+        <Sidebar
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+        />
 
       <section className="content">
         <h1>Your Clipboard</h1>
@@ -142,20 +154,20 @@ async function handleDeleteClip(clip) {
 
         {loading && <p>Loading clips...</p>}
 
-        {!loading && !error && clips.length === 0 && (
+        {!loading && !error && filteredClips.length === 0 && (
           <div className="empty-state">
             <h2>No clips yet</h2>
             <p>Your saved clips will appear here.</p>
           </div>
         )}
 
-        {!loading && clips.length > 0 && (
+        {!loading && filteredClips.length > 0 && (
           <div className="clips-list">
             <p className="clip-count">
-              {clips.length} saved clip(s)
+              {filteredClips.length} saved clip(s)
             </p>
 
-            {clips.map((clip) => (
+            {filteredClips.map((clip) => (
               <article className="clip-card" key={clip.id}>
                 <div className="clip-header">
                   <span className="clip-type">{clip.type}</span>
