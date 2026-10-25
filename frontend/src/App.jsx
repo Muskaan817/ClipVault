@@ -5,6 +5,13 @@ import PinButton from './components/PinButton';
 import DeleteButton from './components/DeleteButton';
 import Sidebar from './components/Sidebar';
 
+function getErrorMessage(err, fallbackMessage) {
+  if (err && (err.message === 'Failed to fetch' || err.name === 'TypeError')) {
+    return 'Could not connect to the backend server. Please make sure the backend is running.';
+  }
+  return err?.message || fallbackMessage;
+}
+
 function App() {
   const [clips, setClips] = useState([]);
   const [content, setContent] = useState('');
@@ -23,7 +30,12 @@ async function fetchClips() {
     setClips(data);
   } catch (err) {
     console.error(err);
-    setError('Could not load clips. Check that the backend is running.');
+    setError(
+      getErrorMessage(
+        err,
+        'Could not load clips. Check that the backend is running.'
+      )
+    );
   } finally {
     setLoading(false);
   }
@@ -55,7 +67,7 @@ async function fetchClips() {
     await fetchClips();
   } catch (err) {
     console.error(err);
-    setError(err.message || 'Could not save clip.');
+    setError(getErrorMessage(err, 'Could not save clip.'));
     setMessage('');
   } finally {
     setSaving(false);
@@ -80,7 +92,7 @@ async function handleTogglePin(clip) {
     await fetchClips();
   } catch (err) {
     console.error(err);
-    setError(err.message || 'Could not update pin status.');
+    setError(getErrorMessage(err, 'Could not update pin status.'));
   }
 }
 
@@ -101,7 +113,7 @@ async function handleDeleteClip(clip) {
     await fetchClips();
   } catch (err) {
     console.error(err);
-    setError(err.message || 'Could not delete clip.');
+    setError(getErrorMessage(err, 'Could not delete clip.'));
     setMessage('');
   }
 }
@@ -133,6 +145,50 @@ const filteredClips = clips.filter((clip) => {
 
   return matchesFilter && matchesSearch;
 });
+
+function getEmptyState() {
+  if (searchQuery.trim()) {
+    return {
+      title: 'No matching clips found.',
+      message: 'Try searching with different keywords or clear your search.',
+    };
+  }
+
+  if (clips.length === 0) {
+    return {
+      title: 'No clips yet',
+      message: 'No clips yet. Add your first clip!',
+    };
+  }
+
+  if (activeFilter === 'Pinned') {
+    return {
+      title: 'No pinned clips found',
+      message: 'You have not pinned any clips yet.',
+    };
+  }
+
+  if (activeFilter === 'Code Snippets') {
+    return {
+      title: 'No code snippets found',
+      message: 'No code snippets found in your saved clips.',
+    };
+  }
+
+  if (activeFilter === 'Links') {
+    return {
+      title: 'No links found',
+      message: 'No links or URLs found in your saved clips.',
+    };
+  }
+
+  return {
+    title: 'No clips found',
+    message: 'No clips match the selected filter.',
+  };
+}
+
+const emptyState = getEmptyState();
 
   return (
     <main className="app">
@@ -191,8 +247,8 @@ const filteredClips = clips.filter((clip) => {
 
         {!loading && !error && filteredClips.length === 0 && (
           <div className="empty-state">
-            <h2>No clips yet</h2>
-            <p>Your saved clips will appear here.</p>
+            <h2>{emptyState.title}</h2>
+            <p>{emptyState.message}</p>
           </div>
         )}
 
@@ -212,33 +268,34 @@ const filteredClips = clips.filter((clip) => {
                 <pre>{clip.content}</pre>
 
                 
-                <button
-                type="button"
-                className="clip-action-button copy-button"
-                onClick={async () => {
-                    try {
-                    await window.clipVault.copyText(clip.content);
-                    setMessage('Copied to clipboard!');
-                    setError('');
-                    } catch (err) {
-                    console.error('Copy failed:', err);
-                    setError('Could not copy this clip.');
-                    setMessage('');
-                    }
-                }}
-                >
-                Copy
-                </button>
+                <div className="clip-actions">
+                  <button
+                    type="button"
+                    className="clip-action-button copy-button"
+                    onClick={async () => {
+                      try {
+                        await window.clipVault.copyText(clip.content);
+                        setMessage('Copied to clipboard!');
+                        setError('');
+                      } catch (err) {
+                        console.error('Copy failed:', err);
+                        setError('Could not copy this clip.');
+                        setMessage('');
+                      }
+                    }}
+                  >
+                    Copy
+                  </button>
 
+                  <PinButton
+                    isPinned={clip.is_pinned}
+                    onToggle={() => handleTogglePin(clip)}
+                  />
 
-                <PinButton
-                isPinned={clip.is_pinned}
-                onToggle={() => handleTogglePin(clip)}
-                />
-
-                <DeleteButton
+                  <DeleteButton
                     onDelete={() => handleDeleteClip(clip)}
-                />
+                  />
+                </div>
 
                 <p className="clip-date">
                   {new Date(clip.created_at).toLocaleString()}
