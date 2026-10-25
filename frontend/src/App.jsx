@@ -9,6 +9,8 @@ function App() {
   const [clips, setClips] = useState([]);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState('All Clips');
+  const [searchQuery, setSearchQuery] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -105,19 +107,31 @@ async function handleDeleteClip(clip) {
 }
 
 const filteredClips = clips.filter((clip) => {
+  let matchesFilter = true;
+
   switch (activeFilter) {
     case 'Pinned':
-      return clip.is_pinned;
+      matchesFilter = clip.is_pinned;
+      break;
 
     case 'Code Snippets':
-      return clip.type === 'code';
+      matchesFilter = clip.type === 'code';
+      break;
 
     case 'Links':
-      return clip.type === 'url';
+      matchesFilter = clip.type === 'url';
+      break;
 
     default:
-      return true;
+      matchesFilter = true;
   }
+
+  const cleanQuery = searchQuery.trim().toLowerCase();
+  const matchesSearch = (clip.content || '')
+    .toLowerCase()
+    .includes(cleanQuery);
+
+  return matchesFilter && matchesSearch;
 });
 
   return (
@@ -151,6 +165,27 @@ const filteredClips = clips.filter((clip) => {
 
         {message && <p className="success-message">{message}</p>}
         {error && <p className="error">{error}</p>}
+
+        <div style={{ marginTop: '24px' }}>
+          <input
+            id="search-input"
+            type="text"
+            placeholder="Search clips..."
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            style={{
+              width: '100%',
+              padding: '12px',
+              fontSize: '14px',
+              color: '#f8fafc',
+              backgroundColor: '#172338',
+              border: '1px solid #263247',
+              borderRadius: '8px',
+              outline: 'none',
+              font: 'inherit',
+            }}
+          />
+        </div>
 
         {loading && <p>Loading clips...</p>}
 
