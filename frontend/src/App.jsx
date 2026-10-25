@@ -1,6 +1,8 @@
 
 import { useEffect, useState } from 'react';
-import { getClips, createClip } from './services/clipService';
+import {getClips,createClip,updateClip,deleteClip} from './services/clipService';
+import PinButton from './components/PinButton';
+import DeleteButton from './components/DeleteButton';
 
 function App() {
   const [clips, setClips] = useState([]);
@@ -54,6 +56,50 @@ async function fetchClips() {
     setMessage('');
   } finally {
     setSaving(false);
+  }
+}
+
+async function handleTogglePin(clip) {
+  try {
+    setError('');
+    setMessage('');
+
+    await updateClip(clip.id, {
+      is_pinned: !clip.is_pinned,
+    });
+
+    setMessage(
+      clip.is_pinned
+        ? 'Clip unpinned successfully!'
+        : 'Clip pinned successfully!'
+    );
+
+    await fetchClips();
+  } catch (err) {
+    console.error(err);
+    setError(err.message || 'Could not update pin status.');
+  }
+}
+
+async function handleDeleteClip(clip) {
+  const confirmed = window.confirm(
+    'Are you sure you want to delete this clip?'
+  );
+
+  if (!confirmed) return;
+
+  try {
+    setError('');
+    setMessage('');
+
+    await deleteClip(clip.id);
+
+    setMessage('Clip deleted successfully!');
+    await fetchClips();
+  } catch (err) {
+    console.error(err);
+    setError(err.message || 'Could not delete clip.');
+    setMessage('');
   }
 }
 
@@ -118,22 +164,34 @@ async function fetchClips() {
 
                 <pre>{clip.content}</pre>
 
+                
                 <button
-                  type="button"
-                  onClick={async () => {
+                type="button"
+                className="clip-action-button copy-button"
+                onClick={async () => {
                     try {
-                      await window.clipVault.copyText(clip.content);
-                      setMessage('Copied to clipboard!');
-                      setError('');
+                    await window.clipVault.copyText(clip.content);
+                    setMessage('Copied to clipboard!');
+                    setError('');
                     } catch (err) {
-                      console.error('Copy failed:', err);
-                      setError('Could not copy this clip.');
-                      setMessage('');
+                    console.error('Copy failed:', err);
+                    setError('Could not copy this clip.');
+                    setMessage('');
                     }
-                  }}
+                }}
                 >
-                  Copy
+                Copy
                 </button>
+
+
+                <PinButton
+                isPinned={clip.is_pinned}
+                onToggle={() => handleTogglePin(clip)}
+                />
+
+                <DeleteButton
+                    onDelete={() => handleDeleteClip(clip)}
+                />
 
                 <p className="clip-date">
                   {new Date(clip.created_at).toLocaleString()}
